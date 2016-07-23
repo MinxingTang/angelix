@@ -9,8 +9,6 @@ help:
 	@echo \'make default\''          'build default modules
 	@echo \'make all\''                  'build all modules
 	@echo \'make MODULE\''                    'build module
-	@echo \'make clean-all\''            'clean all modules
-	@echo \'make clean-MODULE\''              'clean module
 	@echo \'make test\''                         'run tests
 	@echo \'make test-semfix\''           'run semfix tests
 	@echo \'make docker\''              'build docker image
@@ -23,9 +21,8 @@ help:
 
 default: $(DEFAULT_MODULES)
 all: $(DEFAULT_MODULES) $(OPTIONAL_MODULES)
-clean-all: $(CLEAN_MODULES)
 
-.PHONY: help all $(DEFAULT_MODULES) $(OPTIONAL_MODULES) clean-all $(CLEAN_MODULES) test test-semfix docker
+.PHONY: help all $(DEFAULT_MODULES) $(OPTIONAL_MODULES) test test-semfix docker
 
 # Information for retrieving dependencies
 
@@ -72,8 +69,6 @@ llvm-gcc: build/$(LLVM_GCC_ARCHIVE)
 build/$(LLVM_GCC_ARCHIVE):
 	cd build && $(DOWNLOAD) $(LLVM_GCC_URL)
 
-clean-llvm-gcc:
-
 # LLVM2 #
 
 llvm2: build/$(LLVM2_ARCHIVE) build/$(LLVM2_PATCH)
@@ -87,9 +82,6 @@ build/$(LLVM2_ARCHIVE):
 build/$(LLVM2_PATCH):
 	cd build && $(DOWNLOAD) $(LLVM2_PATCH_URL)
 
-clean-llvm2:
-	rm -rf $(LLVM2_DIR)/build
-
 # STP #
 
 stp: $(STP_DIR)
@@ -97,9 +89,6 @@ stp: $(STP_DIR)
 
 $(STP_DIR):
 	cd build && git clone --depth=1 $(STP_URL)
-
-clean-stp:
-	rm -rf $(STP_DIR)/build
 
 # MINISAT #
 
@@ -109,9 +98,6 @@ minisat: $(MINISAT_DIR)
 $(MINISAT_DIR):
 	cd build && git clone --depth=1 $(MINISAT_URL)
 
-clean-minisat:
-	rm -rf $(MINISAT_DIR)/build
-
 # KLEE-UCLIBC #
 
 klee-uclibc: $(KLEE_UCLIBC_DIR)
@@ -120,16 +106,11 @@ klee-uclibc: $(KLEE_UCLIBC_DIR)
 $(KLEE_UCLIBC_DIR):
 	cd build && git clone --depth=1 $(KLEE_UCLIBC_URL)
 
-clean-klee-uclibc:
-	cd $(KLEE_UCLIBC_DIR) && make clean
-
 # KLEE #
 
 klee:
-	cd $(KLEE_DIR) && ./configure --with-llvm=$(LLVM2_DIR) --with-stp=$(STP_DIR)/build --with-uclibc=$(KLEE_UCLIBC_DIR) --enable-posix-runtime && make ENABLE_OPTIMIZED=1
-
-clean-klee:
-	cd $(KLEE_DIR) && make clean
+	cd $(KLEE_DIR) && ./configure --with-llvm=$(LLVM2_DIR) --with-stp=$(STP_DIR)/build --with-z3=$(Z3_INSTALL_DIR) --with-uclibc=$(KLEE_UCLIBC_DIR) --enable-posix-runtime && make ENABLE_OPTIMIZED=1
+	cp $(KLEE_DIR)/Release+Asserts/lib/libkleeRuntest.so $(KLEE_DIR)/Release+Asserts/lib/libkleeRuntest.so.1.0
 
 # Angelix runtime #
 
@@ -141,20 +122,13 @@ runtime:
 	cp src/runtime/libangelix.klee.a $(ANGELIX_ROOT)/build/lib/klee/libangelix.a
 	cd src/runtime && make clean
 
-clean-runtime:
-	rm -rf $(ANGELIX_ROOT)/build/lib
-	cd src/runtime && make clean
-
 # Z3 #
 
 z3: $(Z3_DIR)
-	cd $(Z3_DIR) && python scripts/mk_make.py --java && cd build && make
+	cd $(Z3_DIR) && python scripts/mk_make.py --java --prefix=$(Z3_INSTALL_DIR) && cd build && make && make install
 
 $(Z3_DIR):
 	cd build && git clone --depth=1 $(Z3_URL)
-
-clean-z3:
-	rm -rf $(Z3_DIR)/build
 
 # Z3_2 #
 
@@ -167,9 +141,6 @@ $(Z3_2_19_DIR)/bin/z3_semfix: build/$(Z3_2_19_ARCHIVE)
 
 build/$(Z3_2_19_ARCHIVE):
 	cd build && $(DOWNLOAD) $(Z3_2_19_URL)
-
-clean-z3_2:
-	rm -rf $(Z3_2_19_DIR)
 
 # local::lib
 build/local-lib-2.000018/installed: build/$(LOCAL_LIB_ARCHIVE) $(LOCAL_PERL_ROOT)
@@ -185,17 +156,11 @@ $(LOCAL_PERL_ROOT):
 build/$(LOCAL_LIB_ARCHIVE):
 	cd build && $(DOWNLOAD) $(LOCAL_LIB_URL)
 
-clean-local-lib:
-	rm -rf build/local-lib-2.000018
-
 # semfix #
 
 semfix: local_lib z3_2
 	perl -MCPAN -Mlocal::lib=${LOCAL_PERL_ROOT} -e 'CPAN::install(Log::Log4perl)' \
 	&& perl -MCPAN -Mlocal::lib=${LOCAL_PERL_ROOT} -e 'CPAN::install(XML::Simple)'
-
-clean-semfix: clean-z3_2 clean-local-lib
-	rm -rf $(LOCAL_PERL_ROOT)
 
 # MAX-SAT #
 
@@ -208,12 +173,6 @@ maxsmt: $(MAXSMT_DIR)
 $(MAXSMT_DIR):
 	cd build && git clone --depth=1 $(MAXSMT_URL)
 
-clean-maxsmt:
-	cd $(MAXSMT_DIR) && sbt clean
-
-distclean-maxsmt:
-	rm -rf $(MAXSMT_DIR)
-
 # Synthesis #
 
 synthesis:
@@ -223,20 +182,11 @@ synthesis:
 	mkdir -p $(SYNTHESIS_DIR)/log
 	cd $(SYNTHESIS_DIR) && sbt assembly
 
-clean-synthesis:
-	cd $(SYNTHESIS_DIR) && sbt clean
-
-distclean-synthesis: clean-synthesis
-
 # Synthesis #
 
 nsynth:
 	mvn install:install-file -Dfile=$(Z3_JAR) -DgroupId=com.microsoft.z3 -DartifactId=z3 -Dversion=4 -Dpackaging=jar
 	cd $(ANGELIX_ROOT)/src/nsynth && mvn package
-
-clean-nsynth:
-
-distclean-nsynth: clean-nsynth
 
 # Clang #
 
@@ -258,9 +208,6 @@ build/$(CLANG_ARCHIVE):
 build/$(COMPILER_RT_ARCHIVE):
 	cd build && $(DOWNLOAD) $(COMPILER_RT_URL)
 
-clean-clang:
-	rm -rf "$(LLVM3_DIR)/build"
-
 # Frontend #
 
 frontend: $(LLVM3_DIR)/tools/clang/tools/angelix
@@ -275,8 +222,6 @@ frontend: $(LLVM3_DIR)/tools/clang/tools/angelix
 $(LLVM3_DIR)/tools/clang/tools/angelix:
 	ln -f -s "$(ANGELIX_ROOT)/src/frontend" "$(LLVM3_DIR)/tools/clang/tools/angelix"
 
-clean-frontend:
-
 # Bear #
 
 bear: $(BEAR_DIR)
@@ -286,8 +231,7 @@ bear: $(BEAR_DIR)
 $(BEAR_DIR):
 	cd build && git clone --depth=1 $(BEAR_URL)
 
-clean-bear:
-	rm -rf "$(BEAR_DIR)/build"
+# Docker #
 
 docker:
 	docker build -t angelix .

@@ -452,10 +452,6 @@ if __name__ == "__main__":
                         help='KLEE timeout (default: %(default)s)')
     parser.add_argument('--klee-solver-timeout', metavar='SEC', type=int, default=None,
                         help='KLEE solver timeout (default: %(default)s)')
-    parser.add_argument('--klee-debug', action='store_true',
-                        help='print instructions executed by KLEE (default: %(default)s)')
-    parser.add_argument('--klee-ignore-errors', action='store_true',
-                        help='Don\'t terminate on memory errors (default: %(default)s)')
     parser.add_argument('--ignore-trans-errors', action='store_true',
                         help='Don\'t terminate on transformation errors (default: %(default)s)')
     parser.add_argument('--ignore-infer-errors', action='store_true',
@@ -512,10 +508,6 @@ if __name__ == "__main__":
                         help='[deprecated] ignore --lines options (default: %(default)s)')
     parser.add_argument('--localize-only', action='store_true',
                         help='show all suspicious expressions and terminate (default: %(default)s)')
-    parser.add_argument('--term-when-syn-crashes', action='store_true',
-                        help='[deprecated] terminate when synthesis crashes (default: %(default)s)'
-                        if "AF_DEBUG" in os.environ
-                        else argparse.SUPPRESS)
     parser.add_argument('--version', action='version', version='Angelix 1.0')
 
     args = parser.parse_args()
@@ -588,8 +580,6 @@ if __name__ == "__main__":
     config['klee_search']           = args.klee_search
     config['klee_timeout']          = args.klee_timeout
     config['klee_solver_timeout']   = args.klee_solver_timeout
-    config['klee_debug']            = args.klee_debug
-    config['klee_ignore_errors']    = args.klee_ignore_errors
     config['ignore_trans_errors']   = args.ignore_trans_errors
     config['ignore_infer_errors']   = args.ignore_infer_errors
     config['use_nsynth']            = args.use_nsynth
@@ -611,7 +601,6 @@ if __name__ == "__main__":
     config['build_backend_only']    = args.build_backend_only
     config['localize_only']         = args.localize_only
     config['invalid_localization']  = args.invalid_localization
-    config['term_when_syn_crashes'] = args.term_when_syn_crashes
 
     if args.verbose:
         for key, value in config.items():

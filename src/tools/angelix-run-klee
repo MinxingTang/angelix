@@ -63,7 +63,15 @@ else
     syn_arg=""
 fi
 
-klee $search_arg $forks_arg $depth_arg $time_arg $solver_time_arg $debug_arg $syn_arg $load_arg \
+if [ -z "$KLEE_RELAX" ]; then
+    solver_arg="-solver-backend=stp"
+else
+    solver_arg="-solver-backend=z3 -use-independent-solver=0"
+fi
+
+export ANGELIX=ON
+
+klee $search_arg $forks_arg $depth_arg $time_arg $solver_time_arg $debug_arg $syn_arg $load_arg $solver_arg \
      -write-smt2s \
      --libc=uclibc \
      --posix-runtime \
