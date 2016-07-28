@@ -6,10 +6,10 @@
 
 
 #define ANGELIX_OUTPUT(type, expr, name)                  \
-  (getenv("ANGELIX_SYMBOLIC_RUNTIME") ? angelix_symbolic_output_##type(expr, name) : expr)
+  (getenv("ANGELIX_SYMBOLIC_RUNTIME") ? angelix_symbolic_output_##type(expr, name) : (expr))
 
 #define ANGELIX_CHOOSE(type, expr, bl, bc, el, ec, env_ids, env_vals, env_size) \
-  (getenv("ANGELIX_SYMBOLIC_RUNTIME") ? angelix_choose_relaxed_##type##(expr, bl, bc, el, ec, env_ids, env_vals, env_size) : expr)
+  (getenv("ANGELIX_SYMBOLIC_RUNTIME") ? angelix_choose_relaxed_##type##(expr, bl, bc, el, ec, env_ids, env_vals, env_size) : (expr))
 
 #define ANGELIX_REACHABLE(name)                 \
   (getenv("ANGELIX_SYMBOLIC_RUNTIME") ? angelix_symbolic_reachable(name) : 1)
@@ -20,10 +20,10 @@
 /* TODO: I already cannot remember why I needed this getenv? Should be documented */
 
 #define ANGELIX_OUTPUT(type, expr, name)        \
-  (getenv("ANGELIX_SYMBOLIC_RUNTIME") ? angelix_symbolic_output_##type(expr, name) : expr)
+  (getenv("ANGELIX_SYMBOLIC_RUNTIME") ? angelix_symbolic_output_##type(expr, name) : (expr))
 
 #define ANGELIX_CHOOSE(type, expr, bl, bc, el, ec, env_ids, env_vals, env_size) \
-  (getenv("ANGELIX_SYMBOLIC_RUNTIME") ? angelix_choose_##type(bl, bc, el, ec, env_ids, env_vals, env_size) : expr)
+  (getenv("ANGELIX_SYMBOLIC_RUNTIME") ? angelix_choose_##type(bl, bc, el, ec, env_ids, env_vals, env_size) : (expr))
 
 #define ANGELIX_REACHABLE(name)                 \
   (getenv("ANGELIX_SYMBOLIC_RUNTIME") ? angelix_symbolic_reachable(name) : 1)
@@ -43,10 +43,10 @@
   angelix_dump_output_##type(expr, name)
 
 #define ANGELIX_CHOOSE(type, expr, bl, bc, el, ec, env_ids, env_vals, env_size) \
-  expr
+  (expr)
 
 #define ANGELIX_CHOOSE_CONST(type, expr, bl, bc, el, ec)  \
-  expr
+  (expr)
 
 #define ANGELIX_REACHABLE(name)                 \
   angelix_dump_reachable(name)

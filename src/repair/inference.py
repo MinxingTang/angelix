@@ -243,6 +243,8 @@ class Inferrer:
 
         angelic_paths = []
 
+        z3.set_param("timeout", self.config['path_solving_timeout'])
+
         solver = Solver()
 
         for smt in smt_files:
@@ -459,7 +461,7 @@ class Inferrer:
 
             result = solver.check()
             if result != z3.sat:
-                logger.info('UNSAT')
+                logger.info('UNSAT') # TODO: can be timeout
                 continue
             model = solver.model()
 
