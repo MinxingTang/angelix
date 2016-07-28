@@ -54,13 +54,12 @@ def get_vars(f):
 def parse_variables(vars):
     '''
     <type> ! choice ! <line> ! <column> ! <line> ! <column> ! <instance> ! angelic
-    <type> ! choice ! <line> ! <column> ! <line> ! <column> ! <instance> ! original
     <type> ! choice ! <line> ! <column> ! <line> ! <column> ! <instance> ! env ! <name>
-    <type> ! const ! <line> ! <column> ! <line> ! <column>
     <type> ! output ! <name> ! <instance>
     reachable ! <name> ! <instance>
+    relax ! <line> ! <column> ! <line> ! <column>
 
-    returns outputs, choices, constants, reachable, original
+    returns outputs, choices, reachable, relax
 
     outputs: name -> type * num of instances
     choices: expr -> type * num of instances * env-name list
@@ -76,14 +75,16 @@ def parse_variables(vars):
     choice_instances = dict()
     choice_env = dict()
     reachable = set()
-    constants = set()
-    original = False
+    relax = set()
     for v in vars:
         tokens = v.split('!')
         first = tokens.pop(0)
         if first == 'reachable':
             label = tokens.pop(0)
             reachable.add(label)
+        elif first == 'relax':
+            expr = int(tokens.pop(0)), int(tokens.pop(0)), int(tokens.pop(0)), int(tokens.pop(0))
+            relax.add(expr)
         else:
             type = first
             kind = tokens.pop(0)
@@ -104,8 +105,6 @@ def parse_variables(vars):
                     if expr not in choice_instances:
                         choice_instances[expr] = []
                     choice_instances[expr].append(instance)
-                elif value == 'original':
-                    original = True
                 elif value == 'env':
                     name = tokens.pop(0)
                     if expr not in choice_env:
@@ -113,14 +112,6 @@ def parse_variables(vars):
                     choice_env[expr].add(name)
                 else:
                     raise InferenceError()
-            elif kind == 'const':
-                logger.error('constant choices are not supported')
-                raise InferenceError()
-                if type == 'int':
-                    logger.error('integer constant choices are not supported')
-                    raise InferenceError()
-                expr = int(tokens.pop(0)), int(tokens.pop(0)), int(tokens.pop(0)), int(tokens.pop(0))
-                constants.add(expr)
             else:
                 raise InferenceError()
 
@@ -140,7 +131,7 @@ def parse_variables(vars):
                 raise InferenceError()
         choices[expr] = (type, len(choice_instances[expr]), list(choice_env[expr]))
 
-    return outputs, choices, constants, reachable, original
+    return outputs, choices, reachable, relax
 
 
 class Inferrer:
@@ -264,7 +255,7 @@ class Inferrer:
                          or str(var).startswith('reachable!')]
 
             try:
-                outputs, choices, constants, reachable, original_available = parse_variables(variables)
+                outputs, choices, reachable, relax = parse_variables(variables)
             except:
                 continue
 
@@ -402,11 +393,6 @@ class Inferrer:
                 s = pattern.format(type, expr[0], expr[1], expr[2], expr[3], instance)
                 return Array(s, BitVecSort(32), BitVecSort(8))
 
-            def original_variable(type, expr, instance):
-                pattern = '{}!choice!{}!{}!{}!{}!{}!original'
-                s = pattern.format(type, expr[0], expr[1], expr[2], expr[3], instance)
-                return Array(s, BitVecSort(32), BitVecSort(8))
-
             def env_variable(expr, instance, name):
                 pattern = 'int!choice!{}!{}!{}!{}!{}!env!{}'
                 s = pattern.format(expr[0], expr[1], expr[2], expr[3], instance, name)
@@ -421,10 +407,6 @@ class Inferrer:
 
             def angelic_selector(expr, instance):
                 s = 'angelic!{}!{}!{}!{}!{}'.format(expr[0], expr[1], expr[2], expr[3], instance)
-                return BitVec(s, 32)
-
-            def original_selector(expr, instance):
-                s = 'original!{}!{}!{}!{}!{}'.format(expr[0], expr[1], expr[2], expr[3], instance)
                 return BitVec(s, 32)
 
             def env_selector(expr, instance, name):
@@ -449,10 +431,6 @@ class Inferrer:
                     array = angelic_variable(type, expr, instance)
                     solver.add(selector == array_to_bv32(array))
 
-                    selector = original_selector(expr, instance)
-                    array = original_variable(type, expr, instance)
-                    solver.add(selector == array_to_bv32(array))
-
                     for name in env:
                         selector = env_selector(expr, instance, name)
                         array = env_variable(expr, instance, name)
@@ -465,7 +443,7 @@ class Inferrer:
                 continue
             model = solver.model()
 
-            # expr -> (angelic * original * env) list
+            # expr -> (angelic * env) list
             angelic_path = dict()
 
             if os.path.exists(self.load[test]):
@@ -484,27 +462,14 @@ class Inferrer:
                 for instance in range(0, instances):
                     bv_angelic = model[angelic_selector(expr, instance)]
                     angelic = from_bv_converter_by_type[type](bv_angelic)
-                    bv_original = model[original_selector(expr, instance)]
-                    original = from_bv_converter_by_type[type](bv_original)
-                    if original_available:
-                        logger.info('expression {}[{}]: angelic = {}, original = {}'.format(expr,
-                                                                                            instance,
-                                                                                            angelic,
-                                                                                            original))
-                    else:
-                        logger.info('expression {}[{}]: angelic = {}'.format(expr,
-                                                                             instance,
-                                                                             angelic))
+                    logger.info('expression {}[{}]: angelic = {}'.format(expr, instance, angelic))
                     env_values = dict()
                     for name in env:
                         bv_env = model[env_selector(expr, instance, name)]
                         value = from_bv_converter_by_type['int'](bv_env)
                         env_values[name] = value
 
-                    if original_available:
-                        angelic_path[expr].append((angelic, original, env_values))
-                    else:
-                        angelic_path[expr].append((angelic, None, env_values))
+                    angelic_path[expr].append((angelic, env_values))
 
                     # Dump angelic path to dump folder
                     instance_file = join(expression_dir, str(instance))

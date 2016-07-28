@@ -35,7 +35,7 @@ class Synthesizer:
 
                 for expr, values in path.items():
                     for instance, value in enumerate(values):
-                        angelic, _, environment = value  # ignore original for now
+                        angelic, environment = value
                         context = []
                         for name, value in environment.items():
                             context.append({'name': name,
