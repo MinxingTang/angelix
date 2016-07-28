@@ -23,6 +23,12 @@ if ($ENV{'ANGELIX_COMPILER_CUSTOM_KLEE_COMPILE'}) {
     $custom_klee_compile_flags = $ENV{'ANGELIX_COMPILER_CUSTOM_KLEE_COMPILE'};
 }
 
+my $angelix_relax = 0;
+
+if ($ENV{'ANGELIX_RELAX'}) {
+    $angelix_relax = 1;
+}
+
 
 if ($ENV{'ANGELIX_COMPILER_CUSTOM_TEST'}) {
     $custom_test_flags = $ENV{'ANGELIX_COMPILER_CUSTOM_TEST'};
@@ -195,7 +201,7 @@ if ($compilation_mode eq "test") {
                     "-emit-llvm",
                     "-g",
                     "-O0",
-                    "-D ANGELIX_SYMBOLIC_RUNTIME",
+                    ($angelix_relax ? "-D ANGELIX_RELAX" : "-D ANGELIX_SYMBOLIC_RUNTIME"),
                     wrap_args(@klee_comp_args),
                     $custom_klee_compile_flags);
         my $call_llvm_gcc = join(' ', @args);

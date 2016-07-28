@@ -9,7 +9,7 @@
   (getenv("ANGELIX_SYMBOLIC_RUNTIME") ? angelix_symbolic_output_##type(expr, name) : (expr))
 
 #define ANGELIX_CHOOSE(type, expr, bl, bc, el, ec, env_ids, env_vals, env_size) \
-  (getenv("ANGELIX_SYMBOLIC_RUNTIME") ? angelix_choose_relaxed_##type##(expr, bl, bc, el, ec, env_ids, env_vals, env_size) : (expr))
+  (getenv("ANGELIX_SYMBOLIC_RUNTIME") ? angelix_choose_relaxed_##type(expr, bl, bc, el, ec, env_ids, env_vals, env_size) : (expr))
 
 #define ANGELIX_REACHABLE(name)                 \
   (getenv("ANGELIX_SYMBOLIC_RUNTIME") ? angelix_symbolic_reachable(name) : 1)
@@ -64,8 +64,8 @@ char angelix_dump_output_char(char expr, char* id);
 char* angelix_dump_output_str(char* expr, char* id);
 
 
-int angelix_choose_int_with_deps(int expr, int bl, int bc, int el, int ec, char** env_ids, int* env_vals, int env_size);
-int angelix_choose_bool_with_deps(int expr, int bl, int bc, int el, int ec, char** env_ids, int* env_vals, int env_size);
+int angelix_choose_relaxed_int(int expr, int bl, int bc, int el, int ec, char** env_ids, int* env_vals, int env_size);
+int angelix_choose_relaxed_bool(int expr, int bl, int bc, int el, int ec, char** env_ids, int* env_vals, int env_size);
 int angelix_choose_int(int bl, int bc, int el, int ec, char** env_ids, int* env_vals, int env_size);
 int angelix_choose_bool(int bl, int bc, int el, int ec, char** env_ids, int* env_vals, int env_size);
 

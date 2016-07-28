@@ -59,6 +59,7 @@ class Project:
             # this is a hack to skip output expressions when perform transformation:
             item['command'] = item['command'] + ' -include ' + os.environ['ANGELIX_RUNTIME_H']
             item['command'] = item['command'] + ' -D ANGELIX_INSTRUMENTATION'
+
         compilation_db_file = join(self.dir, 'compile_commands.json')
         with open(compilation_db_file, 'w') as file:
             json.dump(compilation_db, file, indent=2)
@@ -77,12 +78,15 @@ class Project:
                 logger.warning("configuration of {} returned non-zero code".format(relpath(dir)))
 
 
-def build_in_env(dir, cmd, subproc_output, config, env=os.environ):
+def build_in_env(dir, cmd, subproc_output, config, env=os.environ, relax=False):
     dirpath = tempfile.mkdtemp()
     messages = join(dirpath, 'messages')
 
     environment = dict(env)
     environment['ANGELIX_COMPILER_MESSAGES'] = messages
+
+    if relax:
+        environment['ANGELIX_RELAX'] = 'YES'
 
     with cd(dir):
         return_code = subprocess.call(cmd,
@@ -101,10 +105,10 @@ def build_in_env(dir, cmd, subproc_output, config, env=os.environ):
                 logger.warning("failed to build {}".format(relpath(line.strip())))
 
 
-def build_with_cc(dir, cmd, stderr, cc, config):
+def build_with_cc(dir, cmd, stderr, cc, config, relax=False):
     env = dict(os.environ)
     env['CC'] = cc
-    build_in_env(dir, cmd, stderr, config, env)
+    build_in_env(dir, cmd, stderr, config, env, relax)
 
 
 class Validation(Project):
@@ -156,4 +160,5 @@ class Backend(Project):
                       subprocess.DEVNULL if self.config['mute_build_message']
                       else self.subproc_output,
                       'angelix-compiler --klee',
-                      self.config)
+                      self.config,
+                      relax=(self.config['relax'] is not None))

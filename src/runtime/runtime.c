@@ -464,11 +464,11 @@ void angelix_dump_reachable(char* id) {
 }
 
 #define CHOOSE_RELAXED_PROTO(type, typestr)                             \
-  int angelix_choose_relaxed_##type##_with_deps(int expr,               \
-                                        int bl, int bc, int el, int ec, \
-                                        char** env_ids,                 \
-                                        int* env_vals,                  \
-                                        int env_size) {                 \
+  int angelix_choose_relaxed_##type(int expr,                           \
+                                    int bl, int bc, int el, int ec,     \
+                                    char** env_ids,                     \
+                                    int* env_vals,                      \
+                                    int env_size) {                     \
     if (!initialized)                                                   \
       init_tables();                                                    \
     char str_id[INT_LENGTH * 4 + 4 + 1];                                \

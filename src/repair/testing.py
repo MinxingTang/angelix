@@ -37,6 +37,8 @@ class Tester:
             environment['ANGELIX_RUN'] = 'angelix-run-klee'
             # using stub library to make lli work
             environment['LLVMINTERP'] = 'lli -load {}/libkleeRuntest.so'.format(os.environ['KLEE_LIBRARY_PATH'])
+            if self.config['relax'] is not None:
+                environment['KLEE_RELAX'] = self.config['relax']
         if load is not None:
             environment['ANGELIX_WITH_LOADING'] = load
         environment['ANGELIX_WORKDIR'] = self.workdir

@@ -413,6 +413,10 @@ class Inferrer:
                 s = 'env!{}!{}!{}!{}!{}!{}'.format(name, expr[0], expr[1], expr[2], expr[3], instance)
                 return BitVec(s, 32)
 
+            def relax_selector(expr):
+                s = 'relax!{}!{}!{}!{}'.format(expr[0], expr[1], expr[2], expr[3])
+                return z3.Not(BitVecVal(0, 32) == BitVec(s, 32))
+
             for name, values in oracle_constraints.items():
                 type, _ = outputs[name]
                 for i, value in enumerate(values):
@@ -436,6 +440,10 @@ class Inferrer:
                         array = env_variable(expr, instance, name)
                         solver.add(selector == array_to_bv32(array))
 
+            if len(relax) > 0:
+                args = map(relax_selector, relax)
+                args.append(self.config['relax'])
+                solver.add(z3.AtMost(*args))
 
             result = solver.check()
             if result != z3.sat:
