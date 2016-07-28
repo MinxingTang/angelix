@@ -168,20 +168,53 @@ int ht_get( hashtable_t *hashtable, char *key ) {
   End of hashtable implementation
  */
 
+
+#define MAX_RELAX_VARS 1000
 #define MAX_PATH_LENGTH 1000
 #define MAX_NAME_LENGTH 1000
 #define INT_LENGTH 15
 #define LONG_LENGTH (INT_LENGTH * 2)
 
-hashtable_t *output_instances;
-hashtable_t *choice_instances;
-hashtable_t *const_choices;
+
+/*
+  I need to have a data structure that maps four integers to a pointer to symbolic memory
+  Will use a hack: map string INT1-INT2-INT3-INT4 to index in array that keeps the pointers
+*/
+
+hashtable_t* relax_indexes;
+int relax_vars[MAX_RELAX_VARS];
+int relax_num = 0;
+
+int get_relax(int bl, int bc, int el, int ec) {
+  char str_id[INT_LENGTH * 4 + 4 + 1];
+  sprintf(str_id, "%d-%d-%d-%d", bl, bc, el, ec);
+  int index = ht_get(relax_indexes, str_id);
+  if (table_miss) {
+    index = relax_num;
+    relax_num++;
+    char name[MAX_NAME_LENGTH];
+    sprintf(name, "relax!%d!%d!%d!%d", bl, bc, el, ec);
+    int r;
+    klee_make_symbolic(&r, sizeof(r), name);
+    relax_vars[index] = r;
+    ht_set(relax_indexes, str_id, index);
+  }
+  return relax_vars[index];
+}
+
+
+hashtable_t* output_instances;
+hashtable_t* choice_instances;
+
+int initialized = 0;
 
 void init_tables() {
   output_instances = ht_create(65536);
   choice_instances = ht_create(65536);
-  const_choices = ht_create(65536);
+  relax_indexes = ht_create(65536);
+  initialized = 1;
 }
+
 
 /*
   Parsing and printing
@@ -336,24 +369,24 @@ DUMP_PROTO(str)
 
 #undef WRITE_TO_FILE_PROTO
 
-#define SYMBOLIC_OUTPUT_PROTO(type, typestr)                  \
+#define SYMBOLIC_OUTPUT_PROTO(type, typestr)                   \
   type angelix_symbolic_output_##type(type expr, char* id) {   \
-    if (!output_instances)                                    \
-      init_tables();                                          \
-    int previous = ht_get(output_instances, id);              \
-    int instance;                                             \
-    if (table_miss) {                                         \
-      instance = 0;                                           \
-    } else {                                                  \
-      instance = previous + 1;                                \
-    }                                                         \
-    ht_set(output_instances, id, instance);                   \
-    char name[MAX_NAME_LENGTH];                               \
-    sprintf(name, "%s!output!%s!%d", typestr, id, instance);  \
-    type s;                                                   \
-    klee_make_symbolic(&s, sizeof(s), name);                  \
-    klee_assume(s == expr);                                   \
-    return s;                                                 \
+    if (!initialized)                                          \
+      init_tables();                                           \
+    int previous = ht_get(output_instances, id);               \
+    int instance;                                              \
+    if (table_miss) {                                          \
+      instance = 0;                                            \
+    } else {                                                   \
+      instance = previous + 1;                                 \
+    }                                                          \
+    ht_set(output_instances, id, instance);                    \
+    char name[MAX_NAME_LENGTH];                                \
+    sprintf(name, "%s!output!%s!%d", typestr, id, instance);   \
+    type s;                                                    \
+    klee_make_symbolic(&s, sizeof(s), name);                   \
+    klee_assume(s == expr);                                    \
+    return s;                                                  \
   }
 
 SYMBOLIC_OUTPUT_PROTO(int, "int")
@@ -366,7 +399,7 @@ SYMBOLIC_OUTPUT_PROTO(char, "char")
 
 //TODO: later I need to express it through angelix_symbolic_output_str
 void angelix_symbolic_reachable(char* id) {
-  if (!output_instances)
+  if (!initialized)
     init_tables();
   int previous = ht_get(output_instances, "reachable");
   int instance;
@@ -387,7 +420,7 @@ void angelix_symbolic_reachable(char* id) {
 #define DUMP_OUTPUT_PROTO(type)                         \
   type angelix_dump_output_##type(type expr, char* id) { \
     if (getenv("ANGELIX_DUMP")) {                       \
-      if (!output_instances)                            \
+      if (!initialized)                                 \
         init_tables();                                  \
       int previous = ht_get(output_instances, id);      \
       int instance;                                     \
@@ -415,7 +448,7 @@ DUMP_OUTPUT_PROTO(char)
 //TODO: later I need to express it through angelix_dump_output_str
 void angelix_dump_reachable(char* id) {
     if (getenv("ANGELIX_DUMP")) {
-      if (!output_instances)
+      if (!initialized)
         init_tables();
       int previous = ht_get(output_instances, "reachable");
       int instance;
@@ -430,14 +463,13 @@ void angelix_dump_reachable(char* id) {
     return;
 }
 
-
-#define CHOOSE_WITH_DEPS_PROTO(type, typestr)                           \
-  int angelix_choose_##type##_with_deps(int expr,                       \
+#define CHOOSE_RELAXED_PROTO(type, typestr)                             \
+  int angelix_choose_relaxed_##type##_with_deps(int expr,               \
                                         int bl, int bc, int el, int ec, \
                                         char** env_ids,                 \
                                         int* env_vals,                  \
                                         int env_size) {                 \
-    if (!choice_instances)                                              \
+    if (!initialized)                                                   \
       init_tables();                                                    \
     char str_id[INT_LENGTH * 4 + 4 + 1];                                \
     sprintf(str_id, "%d-%d-%d-%d", bl, bc, el, ec);                     \
@@ -459,24 +491,20 @@ void angelix_dump_reachable(char* id) {
       klee_assume(sv == env_vals[i]);                                   \
     }                                                                   \
                                                                         \
-    char name_orig[MAX_NAME_LENGTH];                                    \
-    char* orig_fmt = "%s!choice!%d!%d!%d!%d!%d!original";               \
-    sprintf(name_orig, orig_fmt, typestr, bl, bc, el, ec, instance);    \
-    int so;                                                             \
-    klee_make_symbolic(&so, sizeof(so), name_orig);                     \
-    klee_assume(so == expr);                                            \
-                                                                        \
     char name[MAX_NAME_LENGTH];                                         \
     char* angelic_fmt = "%s!choice!%d!%d!%d!%d!%d!angelic";             \
     sprintf(name, angelic_fmt, typestr, bl, bc, el, ec, instance);      \
     int s;                                                              \
     klee_make_symbolic(&s, sizeof(s), name);                            \
                                                                         \
+    int relax = get_relax(bl, bc, el, ec);                              \
+    klee_assume((relax != 0) | (s == expr));                            \
+                                                                        \
     return s;                                                           \
   }
 
-CHOOSE_WITH_DEPS_PROTO(int, "int")
-CHOOSE_WITH_DEPS_PROTO(bool, "bool")
+CHOOSE_RELAXED_PROTO(int, "int")
+CHOOSE_RELAXED_PROTO(bool, "bool")
 
 #undef CHOOSE_WITH_DEPS_PROTO
 
@@ -486,7 +514,7 @@ CHOOSE_WITH_DEPS_PROTO(bool, "bool")
                             char** env_ids,                         \
                             int* env_vals,                          \
                             int env_size) {                         \
-    if (!choice_instances)                                          \
+    if (!initialized)                                               \
       init_tables();                                                \
     char str_id[INT_LENGTH * 4 + 4 + 1];                            \
     sprintf(str_id, "%d-%d-%d-%d", bl, bc, el, ec);                 \
@@ -523,31 +551,6 @@ CHOOSE_PROTO(bool, "bool")
 #undef CHOOSE_PROTO
 
 
-#define CHOOSE_CONST_PROTO(type, typestr)                           \
-  int angelix_choose_const_##type(int bl, int bc, int el, int ec) { \
-    if (!const_choices)                                             \
-      init_tables();                                                \
-    char str_id[INT_LENGTH * 4 + 4 + 1];                            \
-    sprintf(str_id, "%d-%d-%d-%d", bl, bc, el, ec);                 \
-    int choice = ht_get(const_choices, str_id);                     \
-    if (table_miss) {                                               \
-      char name[MAX_NAME_LENGTH];                                   \
-      char* angelic_fmt = "%s!const!%d!%d!%d!%d";                   \
-      sprintf(name, angelic_fmt, typestr, bl, bc, el, ec);          \
-      int s;                                                        \
-      klee_make_symbolic(&s, sizeof(s), name);                      \
-      ht_set(const_choices, str_id, s);                             \
-      return s;                                                     \
-    } else {                                                        \
-      return choice;                                                \
-    }                                                               \
-  }
-
-CHOOSE_CONST_PROTO(int, "int")
-CHOOSE_CONST_PROTO(bool, "bool")
-
-#undef CHOOSE_CONST_PROTO
-
 int angelix_ignore() {
   return 0;
 }
@@ -561,7 +564,7 @@ int angelix_trace_and_load(int expr, int bl, int bc, int el, int ec) {
     fclose(fp);
   }
   if (getenv("ANGELIX_LOAD")) {
-    if (!choice_instances)
+    if (!initialized)
       init_tables();
     char str_id[INT_LENGTH * 4 + 4 + 1];
     sprintf(str_id, "%d-%d-%d-%d", bl, bc, el, ec);

@@ -427,6 +427,8 @@ if __name__ == "__main__":
                         help='use all tests for repair (default: %(default)s)')
     parser.add_argument('--test-timeout', metavar='MS', type=int, default=None,
                         help='test case timeout (default: %(default)s)')
+    parser.add_argument('--relax', metavar='K', default=None,
+                        help='use relaxed symbolic execution with parameter K (default: %(default)s)')
     parser.add_argument('--group-size', metavar='NUM', type=int, default=DEFAULT_GROUP_SIZE,
                         help='number of statements considered at once (default: %(default)s)')
     parser.add_argument('--group-by-score', action='store_true',
@@ -554,6 +556,11 @@ if __name__ == "__main__":
             logger.warning('--semfix disables --group-size option')
         args.group_size = 1
 
+    if not (args.relax is None):
+        if not (args.group_size == DEFAULT_GROUP_SIZE):
+            logger.warning('--relax disables --group-size option')
+        args.group_size = args.suspicious
+
     if args.dump_only:
         if args.golden is not None:
             logger.warning('--dump-only disables --golden option')
@@ -568,6 +575,7 @@ if __name__ == "__main__":
     config['max_z3_trials']         = args.max_z3_trials
     config['defect']                = args.defect
     config['test_timeout']          = args.test_timeout
+    config['relax']                 = args.relax
     config['group_size']            = args.group_size
     config['group_by_score']        = args.group_by_score
     config['localize_from_bottom']  = args.localize_from_bottom

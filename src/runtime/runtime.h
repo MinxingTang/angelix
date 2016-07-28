@@ -2,34 +2,28 @@
 #define __ANGELIX_RUNTIME_H__
 
 
-#if defined ANGELIX_SYMBOLIC_RUNTIME_WITH_DEPS
+#if defined ANGELIX_RELAX
 
 
 #define ANGELIX_OUTPUT(type, expr, name)                  \
   (getenv("ANGELIX_SYMBOLIC_RUNTIME") ? angelix_symbolic_output_##type(expr, name) : expr)
 
 #define ANGELIX_CHOOSE(type, expr, bl, bc, el, ec, env_ids, env_vals, env_size) \
-  (getenv("ANGELIX_SYMBOLIC_RUNTIME") ? angelix_choose_##type##_with_deps(expr, bl, bc, el, ec, env_ids, env_vals, env_size) : expr)
-
-#define ANGELIX_CHOOSE_CONST(type, expr, bl, bc, el, ec)  \
-  (getenv("ANGELIX_SYMBOLIC_RUNTIME") ? angelix_choose_const_##type(bl, bc, el, ec) : expr)
+  (getenv("ANGELIX_SYMBOLIC_RUNTIME") ? angelix_choose_relaxed_##type##(expr, bl, bc, el, ec, env_ids, env_vals, env_size) : expr)
 
 #define ANGELIX_REACHABLE(name)                 \
   (getenv("ANGELIX_SYMBOLIC_RUNTIME") ? angelix_symbolic_reachable(name) : 1)
 
-//TODO: trace and load with deps
 
 #elif defined ANGELIX_SYMBOLIC_RUNTIME
 
+/* TODO: I already cannot remember why I needed this getenv? Should be documented */
 
 #define ANGELIX_OUTPUT(type, expr, name)        \
   (getenv("ANGELIX_SYMBOLIC_RUNTIME") ? angelix_symbolic_output_##type(expr, name) : expr)
 
 #define ANGELIX_CHOOSE(type, expr, bl, bc, el, ec, env_ids, env_vals, env_size) \
   (getenv("ANGELIX_SYMBOLIC_RUNTIME") ? angelix_choose_##type(bl, bc, el, ec, env_ids, env_vals, env_size) : expr)
-
-#define ANGELIX_CHOOSE_CONST(type, expr, bl, bc, el, ec)  \
-  (getenv("ANGELIX_SYMBOLIC_RUNTIME") ? angelix_choose_const_##type(bl, bc, el, ec) : expr)
 
 #define ANGELIX_REACHABLE(name)                 \
   (getenv("ANGELIX_SYMBOLIC_RUNTIME") ? angelix_symbolic_reachable(name) : 1)
