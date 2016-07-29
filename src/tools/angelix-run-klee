@@ -51,7 +51,7 @@ fi
 if [ -z $ANGELIX_KLEE_DEBUG ]; then
     debug_arg=""
 else
-    debug_arg="-debug-print-instructions"
+    debug_arg="-debug-print-instructions -use-query-log=solver:pc"
 fi
 
 # synthesizer specific args
