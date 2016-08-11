@@ -4,3 +4,6 @@
 [submodule "src/relaxed-klee"]
 	path = src/relaxed-klee
 	url = https://github.com/mechtaev/relaxed-klee.git
+[submodule "src/klee"]
+	path = src/klee
+	url = https://github.com/mechtaev/klee

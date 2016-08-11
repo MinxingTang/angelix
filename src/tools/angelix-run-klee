@@ -66,16 +66,17 @@ fi
 if [ -z "$KLEE_RELAX" ]; then
     solver_arg="-solver-backend=stp"
 else
-    solver_arg="-solver-backend=z3 -use-independent-solver=0"
+    solver_arg="-solver-backend=z3 -use-independent-solver=0" # --use-query-log=all:pc --log-partial-queries-early=true"
 fi
 
-export ANGELIX=ON
+#export ANGELIX=ON
 
 klee $search_arg $forks_arg $depth_arg $time_arg $solver_time_arg $debug_arg $syn_arg $load_arg $solver_arg \
      -write-smt2s \
      --libc=uclibc \
      --posix-runtime \
      -allow-external-sym-calls \
+     -emit-all-errors \
      "${exe}.patched.bc" \
      "$@" \
      2>&1 | tee klee.log

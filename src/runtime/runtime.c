@@ -186,20 +186,25 @@ int relax_vars[MAX_RELAX_VARS];
 int relax_num = 0;
 
 int get_relax(int bl, int bc, int el, int ec) {
-  char str_id[INT_LENGTH * 4 + 4 + 1];
-  sprintf(str_id, "%d-%d-%d-%d", bl, bc, el, ec);
-  int index = ht_get(relax_indexes, str_id);
-  if (table_miss) {
-    index = relax_num;
-    relax_num++;
-    char name[MAX_NAME_LENGTH];
-    sprintf(name, "relax!%d!%d!%d!%d", bl, bc, el, ec);
-    int r;
-    klee_make_symbolic(&r, sizeof(r), name);
-    relax_vars[index] = r;
-    ht_set(relax_indexes, str_id, index);
-  }
-  return relax_vars[index];
+  int r;
+  char name[MAX_NAME_LENGTH];
+  sprintf(name, "relax!%d!%d!%d!%d", bl, bc, el, ec);
+  klee_make_symbolic(&r, sizeof(r), name);
+  return r;
+  /* char str_id[INT_LENGTH * 4 + 4 + 1]; */
+  /* sprintf(str_id, "%d-%d-%d-%d", bl, bc, el, ec); */
+  /* int index = ht_get(relax_indexes, str_id); */
+  /* if (table_miss) { */
+  /*   index = relax_num; */
+  /*   relax_num++; */
+  /*   char name[MAX_NAME_LENGTH]; */
+  /*   sprintf(name, "relax!%d!%d!%d!%d", bl, bc, el, ec); */
+  /*   int r; */
+  /*   klee_make_symbolic(&r, sizeof(r), name); */
+  /*   relax_vars[index] = r; */
+  /*   ht_set(relax_indexes, str_id, index); */
+  /* } */
+  /* return relax_vars[index]; */
 }
 
 
