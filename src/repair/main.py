@@ -585,10 +585,10 @@ if __name__ == "__main__":
             logger.warning('--semfix disables --group-size option')
         args.group_size = 1
 
-    if not (args.relax is None):
-        if not (args.group_size == DEFAULT_GROUP_SIZE):
-            logger.warning('--relax disables --group-size option')
-        args.group_size = args.suspicious
+    # if not (args.relax is None):
+    #     if not (args.group_size == DEFAULT_GROUP_SIZE):
+    #         logger.warning('--relax disables --group-size option')
+    #     args.group_size = args.suspicious
 
     if args.dump_only:
         if args.golden is not None:

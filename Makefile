@@ -74,8 +74,9 @@ build/$(LLVM_GCC_ARCHIVE):
 llvm2: build/$(LLVM2_ARCHIVE) build/$(LLVM2_PATCH)
 	cd build && tar xf $(LLVM2_ARCHIVE)
 	cd build && patch -p0 < $(LLVM2_PATCH)
-	cd $(LLVM2_DIR) && ./configure --disable-optimized --enable-debug-runtime --enable-assertions && make
-#	cd $(LLVM2_DIR) && ./configure --enable-optimized --enable-assertions && make
+	cd $(LLVM2_DIR) && ./configure --enable-optimized --enable-assertions && make
+
+#	cd $(LLVM2_DIR) && ./configure --disable-optimized --enable-debug-runtime --enable-assertions && make
 
 build/$(LLVM2_ARCHIVE):
 	cd build && $(DOWNLOAD) $(LLVM2_URL)
@@ -110,11 +111,12 @@ $(KLEE_UCLIBC_DIR):
 # KLEE #
 
 klee:
-	cd $(KLEE_DIR) && CXXFLAGS="-g -O0" CFLAGS="-g -O0" ./configure --with-llvm=$(LLVM2_DIR) --with-stp=$(STP_DIR)/build --with-z3=$(Z3_INSTALL_DIR) --with-uclibc=$(KLEE_UCLIBC_DIR) --disable-optimized --enable-posix-runtime --with-runtime=Debug+Asserts && make
-	cp $(KLEE_DIR)/Debug+Asserts/lib/libkleeRuntest.so $(KLEE_DIR)/Debug+Asserts/lib/libkleeRuntest.so.1.0
+	cd $(KLEE_DIR) && ./configure --with-llvm=$(LLVM2_DIR) --with-stp=$(STP_DIR)/build --with-z3=$(Z3_INSTALL_DIR) --with-uclibc=$(KLEE_UCLIBC_DIR) --enable-posix-runtime && make ENABLE_OPTIMIZED=1
+	cp $(KLEE_DIR)/Release+Asserts/lib/libkleeRuntest.so $(KLEE_DIR)/Release+Asserts/lib/libkleeRuntest.so.1.0
 
-#	cd $(KLEE_DIR) && ./configure --with-llvm=$(LLVM2_DIR) --with-stp=$(STP_DIR)/build --with-z3=$(Z3_INSTALL_DIR) --with-uclibc=$(KLEE_UCLIBC_DIR) --enable-posix-runtime && make ENABLE_OPTIMIZED=1
-#	cp $(KLEE_DIR)/Release+Asserts/lib/libkleeRuntest.so $(KLEE_DIR)/Release+Asserts/lib/libkleeRuntest.so.1.0
+
+# cd $(KLEE_DIR) && CXXFLAGS="-g -O0" CFLAGS="-g -O0" ./configure --with-llvm=$(LLVM2_DIR) --with-stp=$(STP_DIR)/build --with-z3=$(Z3_INSTALL_DIR) --with-uclibc=$(KLEE_UCLIBC_DIR) --disable-optimized --enable-posix-runtime --with-runtime=Debug+Asserts && make
+# cp $(KLEE_DIR)/Debug+Asserts/lib/libkleeRuntest.so $(KLEE_DIR)/Debug+Asserts/lib/libkleeRuntest.so.1.0
 
 # Angelix runtime #
 
