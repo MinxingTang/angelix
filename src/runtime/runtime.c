@@ -3,6 +3,7 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
 #include <string.h>
 #include <limits.h>
 #include <time.h>
@@ -266,7 +267,7 @@ char* load_instance(char* var, int instance) {
   fseek(fp, 0, SEEK_SET);
   
   char *string = malloc(fsize + 1);
-  if (str == NULL) report_error_malloc_space();
+  if (string == NULL) report_error_malloc_space();
   size_t rsize = fread(string, fsize, 1, fp);
   if (rsize != fsize && ferror(fp))
       report_error_read_file();

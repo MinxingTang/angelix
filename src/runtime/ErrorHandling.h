@@ -9,9 +9,9 @@
 #ifndef ERROR_HANDLING_h
 #define ERROR_HANDLING_h
 
-report_error_malloc_space();
-report_error_read_file();
-report_error_write_file();
-report_error_make_dir();
+void report_error_malloc_space();
+void report_error_read_file();
+void report_error_write_file();
+void report_error_make_dir();
 
 #endif /* ERROR_HANDLING_h */

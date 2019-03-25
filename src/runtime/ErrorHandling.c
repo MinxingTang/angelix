@@ -8,11 +8,11 @@
 #include <stdlib.h>
 #include "ErrorHandling.h"
 
-#define REPORT_ERROR_PROTO(type, msg)     \
-  void report_error_##type() {   \
-    fprintf(stderr, "Error in %s.\n", msg)\
-    abort();                              \
-  }\
+#define REPORT_ERROR_PROTO(type, msg)         \
+  void report_error_##type() {                \
+    fprintf(stderr, "Error in %s.\n", msg);   \
+    abort();                                  \
+  }
 
 REPORT_ERROR_PROTO(malloc_space, "mallocing space")
 REPORT_ERROR_PROTO(read_file, "reading file")

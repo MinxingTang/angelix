@@ -1,8 +1,8 @@
 CC=gcc
 CFLAGS=-I $(KLEE_INCLUDE_PATH)
 
-DEP = runtime.h
-SRC = runtime.c
+DEP = runtime.h ErrorHandling.h
+SRC = runtime.c ErrorHandling.c
 OBJ_KLEE = $(SRC:%.c=%.klee.o)
 OBJ_TEST = $(SRC:%.c=%.test.o)
 
