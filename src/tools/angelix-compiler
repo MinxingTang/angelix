@@ -8,6 +8,7 @@ use warnings;
 use File::Spec;
 
 my $angelix_header = $ENV{'ANGELIX_RUNTIME_H'};
+my $angelix_header_dir = $ENV{'ANGELIX_RUNTIME_DIR'};
 my $libs_klee = $ENV{'ANGELIX_LIBRARY_PATH_KLEE'};
 my $libs_test = $ENV{'ANGELIX_LIBRARY_PATH_TEST'};
 my $klee_libs = $ENV{'KLEE_LIBRARY_PATH'};
@@ -159,7 +160,8 @@ if ($compilation_mode eq "test") {
 
     my @test_comp_args = filter_non_comp_args(\@ARGV, 1);
     my @args = ("gcc",
-                "-include $angelix_header",                
+                #"-include $angelix_header",  #original include header
+                "-I$angelix_header_dir",               
                 wrap_args(@test_comp_args),
                 "-L$libs_test",
                 "-langelix",
@@ -191,7 +193,8 @@ if ($compilation_mode eq "test") {
         my @klee_comp_args = filter_non_comp_args(\@ARGV, 0);
         my @args = ("llvm-gcc",
                     # it breaks compilation of .s files on openssl:
-                    "-include $angelix_header",
+                    #"-include $angelix_header", #original include header
+                    "-I$angelix_header_dir",
                     "-emit-llvm",
                     "-g",
                     "-O0",
