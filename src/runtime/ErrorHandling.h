@@ -12,5 +12,6 @@
 report_error_malloc_space();
 report_error_read_file();
 report_error_write_file();
+report_error_make_dir();
 
 #endif /* ERROR_HANDLING_h */

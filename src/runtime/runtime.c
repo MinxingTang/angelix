@@ -1,3 +1,6 @@
+/*
+ TODO: handling possible errors -- malloc, fread, fputs,
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,6 +9,7 @@
 #include <dirent.h>
 #include "klee/klee.h"
 #include "runtime.h"
+#include "ErrorHandling.h"
 
 
 typedef char* str;
@@ -174,7 +178,7 @@ int ht_get( hashtable_t *hashtable, char *key ) {
 #define LONG_LENGTH (INT_LENGTH * 2)
 
 hashtable_t *output_instances;
-hashtable_t *choice_instances;
+hashtable_t *choice_instances; //instances of variables chosen to be symbolic
 hashtable_t *const_choices;
 
 void init_tables() {
@@ -212,12 +216,14 @@ char parse_char(char* str) {
 
 char* print_int(int i) {
   char* str = (char*) malloc(INT_LENGTH * sizeof(char));
+  if (str == NULL) report_error_malloc_space();
   sprintf(str, "%d", i);
   return str;
 }
 
 char* print_long(long i) {
   char* str = (char*) malloc(LONG_LENGTH * sizeof(char));
+  if (str == NULL) report_error_malloc_space();
   sprintf(str, "%ld", i);
   return str;
 }
@@ -232,6 +238,7 @@ char* print_bool(bool b) {
 
 char* print_char(char c) {
   char* str = (char*) malloc(2 * sizeof(char));
+  if (str == NULL) report_error_malloc_space();
   str[1] = '\0';
   str[0] = c;
   return str;
@@ -259,7 +266,10 @@ char* load_instance(char* var, int instance) {
   fseek(fp, 0, SEEK_SET);
   
   char *string = malloc(fsize + 1);
-  fread(string, fsize, 1, fp);
+  if (str == NULL) report_error_malloc_space();
+  size_t rsize = fread(string, fsize, 1, fp);
+  if (rsize != fsize && ferror(fp))
+      report_error_read_file();
   fclose(fp);
  
   string[fsize] = 0;
@@ -275,7 +285,10 @@ void dump_instance(char* var, int instance, char* data) {
   if (d) {
     closedir(d);
   } else {
-    mkdir(vardir, 0777);
+    int dir_result = mkdir(vardir, 0777);
+      if (dir_result != 0 && errno != EEXIST) {
+          report_error_make_dir();
+      }
   }
 
   char file[MAX_PATH_LENGTH + 1];
@@ -284,7 +297,10 @@ void dump_instance(char* var, int instance, char* data) {
   FILE *fp = fopen(file, "w");
   if (!fp)
     abort();
-  fputs(data, fp);
+    if(fputs(data, fp) == EOF) {
+         fclose(fp);
+         report_error_write_file();
+    }
   fclose(fp);
 }
 
@@ -336,6 +352,15 @@ DUMP_PROTO(str)
 
 #undef WRITE_TO_FILE_PROTO
 
+/**
+ * args:
+ *   expr: original output expr
+ *   id: output symbol expr, default: "stdout"
+ *
+ * previous: previous output
+ * instance: alter previous output, stored in output_instances
+ * s: generated using output_format and converted to symbolic variable using klee_make_symbolic
+ */
 #define SYMBOLIC_OUTPUT_PROTO(type, typestr)                  \
   type angelix_symbolic_output_##type(type expr, char* id) {   \
     if (!output_instances)                                    \
@@ -480,7 +505,22 @@ CHOOSE_WITH_DEPS_PROTO(bool, "bool")
 
 #undef CHOOSE_WITH_DEPS_PROTO
 
-
+/**
+ * args:
+ * env_ids: IDs of environment variables (pointer)
+ * env_vals: array of int values of environment variables
+ * env_size: the number of env_vals
+ *
+ * str_id: stores the target suspicious location using bl, bc, el, ec
+ * previous: previous choice of str_id, used to decide current choice and then reset
+ * instance: stores the current choice (0/1)
+ *
+ * collect current env_vals and choice using env_fmt
+ * invoke klee_make_symbolic to make the environment vals symbolic
+ * generate angelic variable using angelic_fmt and stores it in s
+ *
+ * return s (angelix value)
+ **/
 #define CHOOSE_PROTO(type, typestr)                                 \
   int angelix_choose_##type(int bl, int bc, int el, int ec,         \
                             char** env_ids,                         \
@@ -522,7 +562,7 @@ CHOOSE_PROTO(bool, "bool")
 
 #undef CHOOSE_PROTO
 
-
+//constant choice : add a if-condition?
 #define CHOOSE_CONST_PROTO(type, typestr)                           \
   int angelix_choose_const_##type(int bl, int bc, int el, int ec) { \
     if (!const_choices)                                             \
@@ -553,14 +593,14 @@ int angelix_ignore() {
 }
 
 int angelix_trace_and_load(int expr, int bl, int bc, int el, int ec) {
-  if (getenv("ANGELIX_TRACE")) {
+  if (getenv("ANGELIX_TRACE")) { //recording the repairable locations executed by individual tests
     FILE *fp = fopen(getenv("ANGELIX_TRACE"), "a");
     if (fp == NULL)
       abort();
     fprintf(fp, "%d %d %d %d\n", bl, bc, el, ec);
     fclose(fp);
   }
-  if (getenv("ANGELIX_LOAD")) {
+  if (getenv("ANGELIX_LOAD")) { //for validation (testing angelic value)
     if (!choice_instances)
       init_tables();
     char str_id[INT_LENGTH * 4 + 4 + 1];
