@@ -34,6 +34,7 @@ def tarantula(executed_passing, executed_failing, total_passing, total_failing):
 class Localizer:
 
     def __init__(self, config, lines):
+        print ("__init__ in Localizer is invoked with config and suspicious lines")
         self.lines = lines
         self.config = config
 

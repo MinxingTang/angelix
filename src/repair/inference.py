@@ -1,4 +1,5 @@
 from os.path import join, dirname, relpath, basename
+import errno
 from utils import cd
 import subprocess
 import logging
@@ -145,8 +146,9 @@ def parse_variables(vars):
 
 
 class Inferrer:
-
+    """infers angelic forest"""
     def __init__(self, config, tester, load):
+        print ("__init__ in Inferrer is invoked with config, Tester object, and load")
         self.config = config
         self.run_test = tester
         self.load = load
@@ -234,7 +236,7 @@ class Inferrer:
 
         # name -> value list
         oracle = dict()
-
+        # load test result from dump file to oracle
         vars = os.listdir(dump)
         for var in vars:
             instances = os.listdir(join(dump, var))
@@ -481,7 +483,10 @@ class Inferrer:
 
             if os.path.exists(self.load[test]):
                 shutil.rmtree(self.load[test])
-            os.mkdir(self.load[test])
+            try:
+                os.mkdir(self.load[test])
+            except:
+                raise OSError("Cannot create directory (%s)!\n" % (self.load[test]))
 
             for (expr, item) in choices.items():
                 angelic_path[expr] = []
@@ -490,7 +495,10 @@ class Inferrer:
                 expr_str = '{}-{}-{}-{}'.format(expr[0], expr[1], expr[2], expr[3])
                 expression_dir = join(self.load[test], expr_str)
                 if not os.path.exists(expression_dir):
-                    os.mkdir(expression_dir)
+                    try:
+                        os.mkdir(expression_dir)
+                    except:
+                        raise OSError("Cannot create directory (%s)!\n" % (expression_dir))
 
                 for instance in range(0, instances):
                     bv_angelic = model[angelic_selector(expr, instance)]

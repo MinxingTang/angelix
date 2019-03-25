@@ -1,4 +1,5 @@
 import os, stat
+import errno
 from os.path import join, exists, abspath, basename
 import shutil
 import argparse
@@ -72,7 +73,10 @@ class Angelix:
         self.repair_test_suite = tests[:]
         self.validation_test_suite = tests[:]
         extracted = join(working_dir, 'extracted')
-        os.mkdir(extracted)
+        try:
+            os.mkdir(extracted)
+        except:
+            raise OSError("Cannot create directory (%s)!\n" % (extracted))
 
         angelic_forest_file = join(working_dir, 'last-angelic-forest.json')
 
@@ -131,12 +135,12 @@ class Angelix:
         negative = []
 
         for test in self.validation_test_suite:
-            if self.run_test(src, test):
+            if self.run_test(src, test): #invoking Tester (__call__)
                 positive.append(test)
             else:
                 negative.append(test)
 
-        # make sure if failing tests really fail
+        # make sure if failing tests really fail (checking flacky tests)
         if self.config['redundant_test']:
             negative_copy = negative[:]
             for test in negative_copy:
@@ -157,6 +161,7 @@ class Angelix:
 
         self.frontend_src.configure()
         if config['build_before_instr']:
+            print ("build frontend before instrument")
             self.frontend_src.build()
         self.instrument_for_localization(self.frontend_src)
         self.frontend_src.build()
@@ -526,7 +531,11 @@ if __name__ == "__main__":
     working_dir = join(os.getcwd(), ".angelix")
     if exists(working_dir):
         shutil.rmtree(working_dir, onerror=rm_force)
-    os.mkdir(working_dir)
+    try:
+        os.mkdir(working_dir)
+    except:
+        raise OSError("Cannot create directory (%s)!\n" % (working_dir))
+
 
     rootLogger = logging.getLogger()
     FORMAT = logging.Formatter('%(levelname)-8s %(name)-15s %(message)s')
@@ -696,7 +705,10 @@ if __name__ == "__main__":
         if config['generate_all']:
             patch_dir = basename(abspath(args.src)) + '-' + time.strftime("%Y-%b%d-%H%M%S")
             if not exists(patch_dir):
-                os.mkdir(patch_dir)
+                try:
+                    os.mkdir(patch_dir)
+                except:
+                    raise OSError("Cannot create directory (%s)!\n" % (patch_dir))
             for idx, patch in enumerate(patches):
                 patch_file = os.path.join(patch_dir, str(idx) + '.patch')
                 with open(patch_file, 'w+') as file:

@@ -141,6 +141,7 @@ def parse_variables(vars):
 class Semfix_Inferrer:
 
     def __init__(self, working_dir, config, tester):
+        print ("__init__ in Semfix_Inferrer is invoked with working_dir, config, and tester")
         self.working_dir = working_dir
         self.config = config
         self.run_test = tester

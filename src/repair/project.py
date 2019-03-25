@@ -36,6 +36,7 @@ class Project:
         self.configure_cmd = configure_cmd
 
     def initialize(self):
+        #initialize and back up buggy file
         if self.config['instr_printf'] is not None:
             self.configure()
             self.instrument_printf = PrintfTransformer(self.config)
@@ -69,7 +70,9 @@ class Project:
             # this is a hack to skip output expressions when perform transformation:
             item['command'] = item['command'] + ' -include ' + os.environ['ANGELIX_RUNTIME_H']
             item['command'] = item['command'] + ' -D ANGELIX_INSTRUMENTATION'
+            print ("item, directory: " + item["directory"] +", file: "+ item["file"] + ", command: " + item["command"])
         compilation_db_file = join(self.dir, 'compile_commands.json')
+        print("compilation_db_file: " + compilation_db_file)
         with open(compilation_db_file, 'w') as file:
             json.dump(compilation_db, file, indent=2)
 
@@ -159,7 +162,7 @@ class Validation(Project):
 
 
 class Frontend(Project):
-
+    #frontend to deal with (instrumented) buggy project
     def build(self):
         logger.info('building {} source'.format(basename(self.dir)))
         compile_start_time = time.time()

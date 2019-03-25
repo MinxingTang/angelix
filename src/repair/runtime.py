@@ -1,4 +1,5 @@
 import os
+import errno
 from os.path import join, exists
 import logging
 
@@ -9,10 +10,16 @@ class Dump:
     def _json_to_dump(self, json):
         for test, data in json.items():
             test_dir = join(self.dir, test)
-            os.mkdir(test_dir)
+            try:
+                os.mkdir(test_dir)
+            except:
+                raise OSError("Cannot create directory (%s)!\n" % (test_dir))
             for variable, values in data.items():
                 variable_dir = join(test_dir, variable)
-                os.mkdir(variable_dir)
+                try:
+                    os.mkdir(variable_dir)
+                except:
+                    raise OSError("Cannot create directory (%s)!\n" % (variable_dir))
                 for i, v in enumerate(values):
                     instance_file = join(variable_dir, str(i))
                     with open(instance_file, 'w') as file:
@@ -40,13 +47,19 @@ class Dump:
 
     def __init__(self, working_dir, correct_output):
         self.dir = join(working_dir, 'dump')
-        os.mkdir(self.dir)
+        try:
+            os.mkdir(self.dir)
+        except:
+            raise OSError("Cannot create directory (%s)!\n" % (self.dir))
         if correct_output is not None:
             self._json_to_dump(correct_output)
 
     def __iadd__(self, test_id):
         dir = join(self.dir, test_id)
-        os.mkdir(dir)
+        try:
+            os.mkdir(dir)
+        except:
+            raise OSError("Cannot create directory (%s)!\n" % (dir))
         return self
 
     def __getitem__(self, test_id):
@@ -65,8 +78,12 @@ class Trace:
 
     def __init__(self, working_dir):
         self.dir = join(working_dir, 'trace')
-        os.mkdir(self.dir)
-
+        try:
+            os.mkdir(self.dir)
+        except:
+            raise OSError("Cannot create directory (%s)!\n" % (self.dir))
+    
+    #create trace file for test_id
     def __iadd__(self, test_id):
         trace_file = join(self.dir, test_id)
         file = open(trace_file, 'w')
@@ -99,7 +116,10 @@ class Load:
 
     def __init__(self, working_dir):
         self.dir = join(working_dir, 'load')
-        os.mkdir(self.dir)
+        try:
+            os.mkdir(self.dir)
+        except:
+            raise OSError("Cannot create directory (%s)!\n" % (self.dir))
 
     def __getitem__(self, test_id):
         trace_file = join(self.dir, test_id)

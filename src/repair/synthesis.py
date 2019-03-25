@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 class Synthesizer:
 
     def __init__(self, config, extracted, angelic_forest_file):
+        print ("__init__ in Synthesizer is invoked with config, extracted dir, and angelic_forest_file")
         self.config = config
         self.extracted = extracted
         self.angelic_forest_file = angelic_forest_file
