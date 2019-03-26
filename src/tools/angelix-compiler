@@ -193,8 +193,8 @@ if ($compilation_mode eq "test") {
         my @klee_comp_args = filter_non_comp_args(\@ARGV, 0);
         my @args = ("llvm-gcc",
                     # it breaks compilation of .s files on openssl:
-                    #"-include $angelix_header", #original include header
-                    "-I$angelix_header_dir",
+                    "-include $angelix_header", #original include header
+                    #"-I$angelix_header_dir",
                     "-emit-llvm",
                     "-g",
                     "-O0",
