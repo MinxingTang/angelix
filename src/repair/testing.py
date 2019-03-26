@@ -13,14 +13,14 @@ logger = logging.getLogger(__name__)
 class Tester:
 
     def __init__(self, config, oracle, workdir):
-        print ("__init__ in Tester is invoked")
-        print ("config= "+ config + ", oracle= "+oracle + ", workdir= "+workdir)
+        #print ("__init__ in Tester is invoked")
+        #print ("config= "+ config + ", oracle= "+oracle + ", workdir= "+workdir)
         self.config = config
         self.oracle = oracle
         self.workdir = workdir
 
     def __call__(self, project, test, dump=None, trace=None, load=None, klee=False, env=os.environ, check_instrumented=False):
-        print ("__call__ in Test is invoked. Project dir: " + project.dir + ", test ID: " + test)
+        #print ("__call__ in Test is invoked. Project dir: " + project.dir + ", test ID: " + test)
         src = basename(project.dir)
         if klee:
             logger.info('running test \'{}\' of {} source with KLEE'.format(test, src))
@@ -48,13 +48,13 @@ class Tester:
             environment['ANGELIX_WITH_LOADING'] = load
         environment['ANGELIX_WORKDIR'] = self.workdir
         environment['ANGELIX_TEST_ID'] = test
-        print ("ANGELIX_WORKDIR: " + self.workdir)
+        #print ("ANGELIX_WORKDIR: " + self.workdir)
 
         dirpath = tempfile.mkdtemp()
         executions = join(dirpath, 'executions')
        
         environment['ANGELIX_RUN_EXECUTIONS'] = executions
-        print ("ANGELIX_RUN_EXECUTIONS: " + executions)
+        #print ("ANGELIX_RUN_EXECUTIONS: " + executions)
 
         if self.config['verbose'] and not self.config['mute_test_message']:
             subproc_output = sys.stderr
@@ -62,7 +62,7 @@ class Tester:
             subproc_output = subprocess.DEVNULL
 
         with cd(project.dir):
-            print ("Invoking subprocess.Popen: " + self.oracle + " " + test)
+            #print ("Invoking subprocess.Popen: " + self.oracle + " " + test)
             proc = subprocess.Popen(self.oracle + " " + test,
                                     env=environment,
                                     stdout=subproc_output,
