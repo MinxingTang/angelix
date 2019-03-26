@@ -70,7 +70,6 @@ class Project:
             # this is a hack to skip output expressions when perform transformation:
             item['command'] = item['command'] + ' -include ' + os.environ['ANGELIX_RUNTIME_H']
             item['command'] = item['command'] + ' -D ANGELIX_INSTRUMENTATION'
-            print ("item, directory: " + item["directory"] +", file: "+ item["file"] + ", command: " + item["command"])
         compilation_db_file = join(self.dir, 'compile_commands.json')
         print("compilation_db_file: " + compilation_db_file)
         with open(compilation_db_file, 'w') as file:

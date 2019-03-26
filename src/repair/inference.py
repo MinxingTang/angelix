@@ -148,7 +148,6 @@ def parse_variables(vars):
 class Inferrer:
     """infers angelic forest"""
     def __init__(self, config, tester, load):
-        print ("__init__ in Inferrer is invoked with config, Tester object, and load")
         self.config = config
         self.run_test = tester
         self.load = load

@@ -161,7 +161,6 @@ class Angelix:
 
         self.frontend_src.configure()
         if config['build_before_instr']:
-            print ("build frontend before instrument")
             self.frontend_src.build()
         self.instrument_for_localization(self.frontend_src)
         self.frontend_src.build()

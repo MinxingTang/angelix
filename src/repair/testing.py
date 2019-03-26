@@ -71,7 +71,7 @@ class Tester:
             if klee or self.config['test_timeout'] is None: # KLEE has its own timeout
                 code = proc.wait()
             else:
-                print ("proc wait for time out: " + self.config['test_timeout'])
+                #print ("proc wait for time out: " + self.config['test_timeout'])
                 code = proc.wait(timeout=self.config['test_timeout'])
 
         instrumented = True

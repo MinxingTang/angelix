@@ -45,7 +45,7 @@ class RepairableTransformer:
         if self.config['use_semfix_syn']:
             environment['ANGELIX_USE_SEMFIX_SYN'] = 'YES'
         with cd(project.dir):
-            print ("Invoking subprocess.call() with instrument-repairable " + project.buggy)
+            #print ("Invoking subprocess.call() with instrument-repairable " + project.buggy)
             return_code = subprocess.call(['instrument-repairable', project.buggy],
                                           stderr=self.subproc_output,
                                           stdout=self.subproc_output,

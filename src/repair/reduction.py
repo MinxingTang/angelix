@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 class Reducer:
     """This class reduces list of tests"""
     def __init__(self, config):
-        print ("__init__ in Reducer is invoked with config")
+        #print ("__init__ in Reducer is invoked with config")
         self.config = config
 
     def __call__(self, test_suite, positive, negative, expressions):

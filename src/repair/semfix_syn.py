@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class Semfix_Synthesizer(Synthesizer):
 
     def __init__(self, working_dir, config, extracted, angelic_forest_file):
-        print ("__init__ in Semfix_Synthesizer is invoked with extra working dir " + working_dir)
+        #print ("__init__ in Semfix_Synthesizer is invoked with extra working dir " + working_dir)
         Synthesizer.__init__(self, config, extracted, angelic_forest_file)
         self.working_dir = working_dir
 
