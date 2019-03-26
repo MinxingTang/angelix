@@ -527,14 +527,19 @@ class Inferrer:
 
                     # Dump angelic path to dump folder
                     instance_file = join(expression_dir, str(instance))
-                    with open(instance_file, 'w') as file:
-                        if isinstance(angelic, bool):
-                            if angelic:
-                                file.write('1')
+                    try:
+                        with open(instance_file, 'w') as file:
+                            if isinstance(angelic, bool):
+                                if angelic:
+                                    file.write('1')
+                                else:
+                                    file.write('0')
                             else:
-                                file.write('0')
-                        else:
-                            file.write(str(angelic))
+                                file.write(str(angelic))
+                    except:
+                        raise Exception("Error when dumping angelic path to file %s!\n" % instance_file)
+                    finally:
+                        file.close()
             
 
             # Run Tester to validate the dumped values

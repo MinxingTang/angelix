@@ -413,11 +413,16 @@ class Semfix_Inferrer:
                         output_var_type = output_var.split('!')[0]
                         for io_file in glob(join(test_dir, '*.IO')):
                             if not output_var in open(io_file).read():
-                                with open(io_file, "a") as f_io:
-                                    f_io.write("\n")
-                                    f_io.write("@output\n")
-                                    f_io.write('name {}\n'.format(output_var))
-                                    f_io.write('type {}\n'.format(output_var_type))
+                                try:
+                                    with open(io_file, "a") as f_io:
+                                        f_io.write("\n")
+                                        f_io.write("@output\n")
+                                        f_io.write('name {}\n'.format(output_var))
+                                        f_io.write('type {}\n'.format(output_var_type))
+                                except:
+                                    raise Exception("Error when updating io_file %s!\n" % io_file)
+                                finally:
+                                    f_io.close()
 
 
         if self.config['max_angelic_paths'] is not None and \
@@ -471,37 +476,40 @@ class Semfix_Inferrer:
             angel_type, instances, env = item
             for instance in range(0, instances):
                 test_dir = self.get_test_dir(test)
-                IO_file = open(join(test_dir,
+                try:
+                    IO_file = open(join(test_dir,
                                     "choice" + '.{}.IO'.format(instance)), 'w')
-                for name in env:
-                    IO_file.write('@input\n')
-                    input_type = 'int' # FIXME
-                    IO_file.write('name {}\n'.
-                                  format(self.env_variable_name(input_type, expr, instance, name)))
-                    IO_file.write('init -\n')
-                    IO_file.write('type {}\n'.format(input_type))
-                    IO_file.write('\n')
-
-                # logger.info('angelic type: {}'.format(angel_type))
-                IO_file.write('@output\n')
-                IO_file.write('name {}\n'.
-                              format(self.angelic_variable_name(angel_type, expr, instance)))
-                IO_file.write('type {}\n'.format(angel_type))
-                IO_file.write('\n')
-
-                IO_file.write('@output\n')
-                IO_file.write('name {}\n'.
-                                  format(self.original_variable_name(angel_type, expr, instance)))
-                IO_file.write('type {}\n'.format(angel_type))
-                IO_file.write('\n')
-
-                for name, values in oracle_constraints.items():
-                    constraint_type, _ = outputs[name]
-                    for i, value in enumerate(values):
-                        IO_file.write('@output\n')
+                    for name in env:
+                        IO_file.write('@input\n')
+                        input_type = 'int' # FIXME
                         IO_file.write('name {}\n'.
-                                      format(self.output_variable_name(constraint_type, name, i)))
-                        IO_file.write('type {}\n'.format(constraint_type))
+                                      format(self.env_variable_name(input_type, expr, instance, name)))
+                        IO_file.write('init -\n')
+                        IO_file.write('type {}\n'.format(input_type))
                         IO_file.write('\n')
 
-                IO_file.close()
+                    # logger.info('angelic type: {}'.format(angel_type))
+                    IO_file.write('@output\n')
+                    IO_file.write('name {}\n'.
+                                  format(self.angelic_variable_name(angel_type, expr, instance)))
+                    IO_file.write('type {}\n'.format(angel_type))
+                    IO_file.write('\n')
+
+                    IO_file.write('@output\n')
+                    IO_file.write('name {}\n'.
+                                      format(self.original_variable_name(angel_type, expr, instance)))
+                    IO_file.write('type {}\n'.format(angel_type))
+                    IO_file.write('\n')
+
+                    for name, values in oracle_constraints.items():
+                        constraint_type, _ = outputs[name]
+                        for i, value in enumerate(values):
+                            IO_file.write('@output\n')
+                            IO_file.write('name {}\n'.
+                                          format(self.output_variable_name(constraint_type, name, i)))
+                            IO_file.write('type {}\n'.format(constraint_type))
+                            IO_file.write('\n')
+                except:
+                    raise Exception("Error when generating io file %s!\n" % str(IO_file))
+                finally:
+                    IO_file.close()

@@ -711,15 +711,25 @@ if __name__ == "__main__":
                     raise OSError("Cannot create directory (%s)!\n" % (patch_dir))
             for idx, patch in enumerate(patches):
                 patch_file = os.path.join(patch_dir, str(idx) + '.patch')
-                with open(patch_file, 'w+') as file:
-                    for line in patch:
-                        file.write(line)
+                try:
+                    with open(patch_file, 'w+') as file:
+                        for line in patch:
+                            file.write(line)
+                except:
+                    raise Exception("Exception when writing to %s!\n" % patch_file)
+                finally:
+                    file.close()
             logger.info("patches successfully generated in {} (see {})".format(elapsed, patch_dir))
         else:
             patch_file = basename(abspath(args.src)) + '-' + time.strftime("%Y-%b%d-%H%M%S") + '.patch'
             logger.info("patch successfully generated in {} (see {})".format(elapsed, patch_file))
-            with open(patch_file, 'w+') as file:
-                for line in patches[0]:
-                    file.write(line)
+            try:
+                with open(patch_file, 'w+') as file:
+                    for line in patches[0]:
+                        file.write(line)
+            except:
+                raise Exception("Exception when writing to %s!\n" % patch_file)
+            finally:
+                file.close()
         print('SUCCESS')
         exit(0)

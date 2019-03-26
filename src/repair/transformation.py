@@ -75,9 +75,14 @@ class SuspiciousTransformer:
         environment = dict(os.environ)
         dirpath = tempfile.mkdtemp()
         suspicious_file = join(dirpath, 'suspicious')
-        with open(suspicious_file, 'w') as file:
-            for e in expressions:
-                file.write('{} {} {} {}\n'.format(*e))
+        try:
+            with open(suspicious_file, 'w') as file:
+                for e in expressions:
+                    file.write('{} {} {} {}\n'.format(*e))
+        except:
+            raise Exception("Error when writing to suspicious file %s!\n" % (suspicious_file))
+        finally:
+            file.close()
 
         if self.config['semfix']:
             environment['ANGELIX_SEMFIX_MODE'] = 'YES'
@@ -131,10 +136,15 @@ class FixInjector:
         environment = dict(os.environ)
         dirpath = tempfile.mkdtemp()
         patch_file = join(dirpath, 'patch')
-        with open(patch_file, 'w') as file:
-            for e, p in patch.items():
-                file.write('{} {} {} {}\n'.format(*e))
-                file.write(p + "\n")
+        try:
+            with open(patch_file, 'w') as file:
+                for e, p in patch.items():
+                    file.write('{} {} {} {}\n'.format(*e))
+                    file.write(p + "\n")
+        except:
+            raise Exception("Error when writing to patch file %s!\n" % (patch_file))
+        finally:
+            file.close()
 
         if self.config['semfix']:
             environment['ANGELIX_SEMFIX_MODE'] = 'YES'
@@ -174,10 +184,15 @@ class PrintfTransformer:
             return_code = subprocess.call(['instrument-printf', source_file],
                                           stderr=self.subproc_output,
                                           stdout=self.subproc_output)
-            with open(source_file, 'r+') as f:
-                content = f.read()
-                f.seek(0, 0)
-                f.write('#ifndef ANGELIX_OUTPUT\n#define ANGELIX_OUTPUT(type, expr, id) expr\n#endif\n' + content)
+            try: 
+                with open(source_file, 'r+') as f:
+                    content = f.read()
+                    f.seek(0, 0)
+                    f.write('#ifndef ANGELIX_OUTPUT\n#define ANGELIX_OUTPUT(type, expr, id) expr\n#endif\n' + content)
+            except:
+                raise Exception("Error when instrumenting %s!" % (source_file))
+            finally:
+                f.close()
 
         if return_code != 0:
             if self.config['ignore_trans_errors']:

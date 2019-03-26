@@ -22,8 +22,13 @@ class Dump:
                     raise OSError("Cannot create directory (%s)!\n" % (variable_dir))
                 for i, v in enumerate(values):
                     instance_file = join(variable_dir, str(i))
-                    with open(instance_file, 'w') as file:
-                        file.write(str(v))
+                    try:
+                        with open(instance_file, 'w') as file:
+                            file.write(str(v))
+                    except:
+                        raise Exception("Error when dumping data to file %s!\n" % instance_file)
+                    finally:
+                        file.close()
 
     def export(self):
         json = dict()
